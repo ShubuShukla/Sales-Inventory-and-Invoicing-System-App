@@ -44,10 +44,11 @@ export default function CustomerLogin() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <Card className="w-full max-w-sm shadow-md border border-gray-200">
+      <Card className="w-full max-w-sm bg-white shadow-lg rounded-2xl border border-gray-100 p-6">
         <CardHeader className="text-center space-y-1">
-          <h2 className="text-xl font-semibold">Retailer Login</h2>
-          <p className="text-sm text-gray-500">Enter mobile number to continue</p>
+          <h2 className="text-xl font-semibold text-blue-700">Retailer Login</h2>
+
+          <p className="text-xl font-semibold text-blue-700">Enter mobile number to continue</p>
         </CardHeader>
 
         <CardContent>

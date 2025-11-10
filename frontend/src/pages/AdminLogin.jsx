@@ -43,13 +43,13 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4">
-      <Card className="w-full max-w-md shadow-xl border-blue-200">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <Card className="w-full max-w-sm bg-white shadow-lg rounded-2xl border border-gray-100 p-4">
         <CardHeader>
-          <CardTitle className="text-center text-blue-700 text-xl font-bold">
+          <CardTitle className="text-xl font-semibold text-blue-700">
             🔒 Admin Login
           </CardTitle>
-          <p className="text-center text-gray-500 text-sm">
+          <p className="text-xl font-semibold text-blue-700">
             Phone + Password + OTP
           </p>
         </CardHeader>
