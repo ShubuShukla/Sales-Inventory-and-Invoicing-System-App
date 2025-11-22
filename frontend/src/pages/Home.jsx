@@ -5,12 +5,13 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-6">
         <div className="text-center mb-6">
-          <div className="mx-auto w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center text-2xl font-bold text-blue-700">
-            WHOLESALE BILLING SYSTEM
+          <div className="mx-auto w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center text-2xl 
+          font-bold text-blue-700">
+           Sales Inventory & Invoicing System App
           </div>
-          <h1 className="text-xl font-semibold mt-4">Wholesale Billing</h1>
+          <h1 className="text-xl font-semibold mt-4">SIISA</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Simple billing & collections for retailers
+            Billing, Payment sending, Order creation and many more features
           </p>
         </div>
 
@@ -31,7 +32,8 @@ export default function Home() {
         </div>
 
         <p className="text-xs text-gray-400 mt-6 text-center">
-          Mobile-first • Built for quick billing
+         •Mobile-first          
+         • Built for quick billing
         </p>
       </div>
     </div>

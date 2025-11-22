@@ -1,0 +1,95 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(uuid())
+  phone       String   @unique
+  name        String?
+  role        UserRole
+  password    String?
+  isVerified  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // relations
+  parties     Party[]  @relation("PartyOwner")
+  invoices    Invoice[] @relation("InvoiceOwner")
+  items       Item[]    // add missing reverse relation
+}
+
+model Party {
+  id          String   @id @default(uuid())
+  name        String
+  phone       String
+  type        PartyType
+  gst         String?
+  address     String?
+  balance     Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ownerId     String
+  owner       User     @relation("PartyOwner", fields: [ownerId], references: [id])
+  invoices    Invoice[] // reverse relation added here
+}
+
+model Item {
+  id          String   @id @default(uuid())
+  sku         String?  @unique
+  name        String
+  description String?
+  unitPrice   Float
+  costPrice   Float?
+  stock       Int      @default(0)
+
+  cgst        Float    @default(0)
+  sgst        Float    @default(0)
+  hsnCode     String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id])
+}
+
+model Invoice {
+  id          String   @id @default(uuid())
+  invoiceNo   String   @unique
+  total       Float
+  status      InvoiceStatus @default(PENDING)
+  items       Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ownerId     String
+  partyId     String
+
+  owner       User   @relation("InvoiceOwner", fields: [ownerId], references: [id])
+  party       Party  @relation(fields: [partyId], references: [id])
+}
+
+enum UserRole {
+  ADMIN
+  CUSTOMER
+  SUPPLIER
+}
+
+enum PartyType {
+  CUSTOMER
+  SUPPLIER
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  PARTIAL
+  CANCELLED
+}

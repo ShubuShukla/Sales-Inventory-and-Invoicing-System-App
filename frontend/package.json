@@ -1,7 +1,10 @@
 {
-  "name": "frontend",
+  "name": "siisa",
+  "version": "1.0.0",
   "private": true,
-  "version": "0.0.0",
+  "description": "Sales Inventory and Invoicing System App (SIISA) — a modern business management platform for wholesalers and retailers.",
+  "author": "Shubhendra Shukla",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -35,7 +38,15 @@
     "shadcn-ui": "^0.9.5",
     "tailwindcss": "^4.1.17",
     "tailwindcss-animate": "^1.0.7",
-    "tailwindcss-cli": "^0.1.2",
     "vite": "^7.1.7"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ShubuShukla/Sales-Inventory-and-Invoicing-System-App.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ShubuShukla/Sales-Inventory-and-Invoicing-System-App/issues"
+  },
+  "homepage": "https://github.com/ShubuShukla/Sales-Inventory-and-Invoicing-System-App#readme"
 }
+

@@ -7,7 +7,7 @@ export default function Parties() {
   const navigate = useNavigate();
 
   const customers = [
-    { name: "Santosh Bhaiya Billi", amount: 3114, days: "5 days ago" },
+    { name: "Santosh Choudhary", amount: 3114, days: "5 days ago" },
   ];
   const suppliers = [];
 
