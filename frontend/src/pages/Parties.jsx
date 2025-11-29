@@ -1,15 +1,50 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { apiRequest } from "@/apiClient";
 
 export default function Parties() {
-  const [tab, setTab] = useState("customers");
+  const [tab, setTab] = useState("CUSTOMER"); // CUSTOMER | SUPPLIER
+  const [loading, setLoading] = useState(false);
+  const [parties, setParties] = useState([]);
+  const [error, setError] = useState("");
+
   const navigate = useNavigate();
 
-  const customers = [
-    { name: "Santosh Choudhary", amount: 3114, days: "5 days ago" },
-  ];
-  const suppliers = [];
+  // Fetch parties whenever tab changes
+  useEffect(() => {
+    fetchParties();
+  }, [tab]);
+
+  async function handleDelete(id) {
+    const ok = window.confirm("Are you sure you want to delete this party?");
+    if (!ok) return;
+
+    try {
+      await apiRequest(`/api/parties/${id}`, {
+        method: "DELETE",
+      });
+
+      // After delete, refresh list
+      fetchParties();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  async function fetchParties() {
+    setLoading(true);
+    setError("");
+
+    try {
+      const data = await apiRequest(`/api/parties?type=${tab}`);
+      setParties(data.parties || []);
+    } catch (err) {
+      setError(err.message || "Failed to load parties");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -24,22 +59,21 @@ export default function Parties() {
       {/* Tabs */}
       <div className="flex justify-around mt-4 border-b border-gray-200">
         <button
-          className={`pb-2 font-medium ${
-            tab === "customers"
-              ? "text-blue-700 border-b-2 border-yellow-400"
-              : "text-gray-600"
-          }`}
-          onClick={() => setTab("customers")}
+          className={`pb-2 font-medium ${tab === "CUSTOMER"
+            ? "text-blue-700 border-b-2 border-yellow-400"
+            : "text-gray-600"
+            }`}
+          onClick={() => setTab("CUSTOMER")}
         >
           CUSTOMERS
         </button>
+
         <button
-          className={`pb-2 font-medium ${
-            tab === "suppliers"
-              ? "text-blue-700 border-b-2 border-yellow-400"
-              : "text-gray-600"
-          }`}
-          onClick={() => setTab("suppliers")}
+          className={`pb-2 font-medium ${tab === "SUPPLIER"
+            ? "text-blue-700 border-b-2 border-yellow-400"
+            : "text-gray-600"
+            }`}
+          onClick={() => setTab("SUPPLIER")}
         >
           SUPPLIERS
         </button>
@@ -49,12 +83,24 @@ export default function Parties() {
       <div className="bg-white mx-4 mt-3 rounded-xl shadow p-4 flex justify-between items-center">
         <div className="text-center">
           <p className="text-xs text-gray-500">You will give</p>
-          <p className="text-green-600 font-semibold text-sm">₹0</p>
+          <p className="text-green-600 font-semibold text-sm">
+            ₹
+            {tab === "SUPPLIER"
+              ? parties.reduce((sum, p) => sum + (p.balance || 0), 0)
+              : 0}
+          </p>
         </div>
+
         <div className="text-center border-l border-gray-200 px-4">
           <p className="text-xs text-gray-500">You will get</p>
-          <p className="text-red-600 font-semibold text-sm">₹{tab === "customers" ? "3,114" : "0"}</p>
+          <p className="text-red-600 font-semibold text-sm">
+            ₹
+            {tab === "CUSTOMER"
+              ? parties.reduce((sum, p) => sum + (p.balance || 0), 0)
+              : 0}
+          </p>
         </div>
+
         <button className="text-blue-600 text-sm font-medium underline">
           Report
         </button>
@@ -62,42 +108,83 @@ export default function Parties() {
 
       {/* List */}
       <div className="mt-4 px-4">
-        {tab === "customers" && customers.length > 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-3 flex justify-between items-center">
-            <div>
-              <p className="font-medium text-gray-800">{customers[0].name}</p>
-              <p className="text-xs text-gray-500">{customers[0].days}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-red-600 font-semibold text-sm">
-                ₹{customers[0].amount}
-              </p>
-              <p className="text-xs text-blue-600 underline">Remind</p>
-            </div>
-          </div>
-        ) : (
+        {loading ? (
+          <p className="text-center text-gray-600 mt-10">Loading...</p>
+        ) : error ? (
+          <p className="text-center text-red-600 mt-10">{error}</p>
+        ) : parties.length === 0 ? (
           <div className="flex flex-col items-center mt-16 text-gray-500">
             <div className="text-7xl">📦</div>
             <p className="text-center mt-2">
-              Add {tab === "customers" ? "customers" : "suppliers"} to manage{" "}
-              {tab === "customers" ? "your sales" : "your purchases"}
+              No {tab === "CUSTOMER" ? "customers" : "suppliers"} found.
             </p>
           </div>
+        ) : (
+          <div className="space-y-3">
+            {parties.map((p) => (
+              <div
+                key={p.id}
+                className="bg-white rounded-lg shadow-sm p-3 flex justify-between items-center"
+              >
+                {/* LEFT SIDE */}
+                <div>
+                  <p
+                    className="font-medium text-gray-800 underline cursor-pointer"
+                    onClick={() => navigate(`/party/${p.id}`)}
+                  >
+                    {p.name}
+                  </p>
+                  <p className="text-xs text-gray-500">{p.phone}</p>
+
+                  {/* EDIT BUTTON */}
+                  <button
+                    className="text-blue-600 text-xs underline mt-1"
+                    onClick={() => navigate(`/edit-party/${p.id}`)}
+                  >
+                    Edit
+                  </button>
+                  {/* Delete */}
+                  <button
+                    className="text-red-600 text-xs underline mt-1 block"
+                    onClick={() => handleDelete(p.id)}
+                  >
+                    Delete
+                  </button>
+                </div>
+
+                {/* RIGHT SIDE */}
+                <div className="text-right">
+                  <p
+                    className={
+                      (p.balance || 0) >= 0
+                        ? "text-red-600 font-semibold text-sm"
+                        : "text-green-600 font-semibold text-sm"
+                    }
+                  >
+                    ₹{p.balance || 0}
+                  </p>
+                  <p className="text-xs text-blue-600 underline">Remind</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
         )}
       </div>
 
       {/* Floating Add Button */}
       <div className="fixed bottom-20 right-6 flex items-center gap-2">
         <Button
-          className={`${
-            tab === "customers" ? "bg-pink-600 hover:bg-pink-700" : "bg-green-600 hover:bg-green-700"
-          } text-white rounded-full px-6 py-3 flex items-center gap-2 shadow-lg`}
+          className={`${tab === "CUSTOMER"
+            ? "bg-pink-600 hover:bg-pink-700"
+            : "bg-green-600 hover:bg-green-700"
+            } text-white rounded-full px-6 py-3 flex items-center gap-2 shadow-lg`}
           onClick={() =>
-            navigate(tab === "customers" ? "/add-customer" : "/add-supplier")
+            navigate(`/add-party?type=${tab}`)
           }
         >
           <span className="text-lg">➕</span>
-          {tab === "customers" ? "Add Customer" : "Add Supplier"}
+          {tab === "CUSTOMER" ? "Add Customer" : "Add Supplier"}
         </Button>
       </div>
     </div>

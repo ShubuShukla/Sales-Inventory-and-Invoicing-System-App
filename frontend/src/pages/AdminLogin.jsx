@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Lock, Phone, KeyRound } from "lucide-react";
+import { apiRequest } from "@/apiClient"; // <-- use your existing apiClient
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -13,32 +14,70 @@ export default function AdminLogin() {
   const [showPass, setShowPass] = useState(false);
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // fixed credentials
+  // Keep dev panel values for convenience (display only)
   const DEV_PHONE = "9999999999";
   const DEV_PASS = "admin123";
   const FIXED_OTP = "1234";
 
-  function handleSendOtp(e) {
+  // Temporary storage for token & user until OTP is verified
+  const [pendingToken, setPendingToken] = useState(null);
+  const [pendingUser, setPendingUser] = useState(null);
+
+  // Step 1: send credentials to backend and if valid, go to OTP screen
+  async function handleSendOtp(e) {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
-    if (phone !== DEV_PHONE) return setError("Phone not registered");
-    if (password !== DEV_PASS) return setError("Incorrect password");
+    try {
+      // Call backend login
+      const data = await apiRequest("/api/auth/admin/login", {
+        method: "POST",
+        body: JSON.stringify({ phone, password }),
+      });
 
-    setStep("otp");
+      // Expect data.token and data.user
+      if (!data?.token) throw new Error("No token returned from server");
+
+      // Save temporarily until OTP verified
+      setPendingToken(data.token);
+      setPendingUser(data.user || null);
+
+      // Move to OTP UI (we still use fake OTP)
+      setStep("otp");
+    } catch (err) {
+      setError(err.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
   }
 
+  // Step 2: verify fake OTP, then store real token & user in localStorage
   function handleVerifyOtp(e) {
     e.preventDefault();
     setError("");
 
+    if (!pendingToken) {
+      return setError("No pending login. Please enter credentials first.");
+    }
+
     if (otp !== FIXED_OTP) return setError("Incorrect OTP");
 
-    localStorage.setItem("token", "mock-admin-token");
-    localStorage.setItem("role", "ADMIN");
-    localStorage.setItem("name", "Admin");
+    // Store token under the key your apiClient expects
+    localStorage.setItem("siisa_token", pendingToken);
 
+    // Optionally store user info
+    if (pendingUser) {
+      localStorage.setItem("siisa_user", JSON.stringify(pendingUser));
+    }
+
+    // Clear temporary states
+    setPendingToken(null);
+    setPendingUser(null);
+
+    // Navigate to admin dashboard (same as before)
     navigate("/admin");
   }
 
@@ -96,8 +135,12 @@ export default function AdminLogin() {
 
               {error && <p className="text-red-600 text-sm">{error}</p>}
 
-              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                Send OTP
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {loading ? "Checking..." : "Send OTP"}
               </Button>
             </form>
           )}
@@ -121,12 +164,24 @@ export default function AdminLogin() {
               <div className="flex justify-between text-sm">
                 <button
                   type="button"
-                  onClick={() => setStep("credentials")}
+                  onClick={() => {
+                    setStep("credentials");
+                    setError("");
+                  }}
                   className="text-gray-500 underline"
                 >
                   Edit number / password
                 </button>
-                <span className="text-blue-600 font-medium">Resend OTP</span>
+                <span
+                  className="text-blue-600 font-medium"
+                  onClick={() => {
+                    // "Resend" in dev mode: go back to credentials so you can re-send.
+                    setStep("credentials");
+                    setError("");
+                  }}
+                >
+                  Resend OTP
+                </span>
               </div>
 
               {error && <p className="text-red-600 text-sm">{error}</p>}

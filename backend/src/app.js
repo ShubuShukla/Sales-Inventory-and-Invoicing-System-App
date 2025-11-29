@@ -6,8 +6,8 @@ const morgan = require('morgan');
 
 const authRoutes = require('./routes/authRoutes');
 const itemsRoutes = require('./routes/itemsRoutes');
-// const partiesRoutes = require('./routes/partiesRoutes');
-// const invoicesRoutes = require('./routes/invoicesRoutes');
+const partiesRoutes = require('./routes/partiesRoutes');
+const invoicesRoutes = require('./routes/invoicesRoutes');
 // const dashboardRoutes = require('./routes/dashboardRoutes');
 
 const errorHandler = require('./middlewares/errorHandler');
@@ -21,7 +21,9 @@ app.get('/', (req, res) => res.json({ ok: true, app: 'SIISA backend' }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/items', itemsRoutes);
-// app.use('/api/parties', partiesRoutes);
+app.use('/api/parties', partiesRoutes);
+app.use('/api/invoices', invoicesRoutes);
+
 // app.use('/api/invoices', invoicesRoutes);
 // app.use('/api/dashboard', dashboardRoutes);
 

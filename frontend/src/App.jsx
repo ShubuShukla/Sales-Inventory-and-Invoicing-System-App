@@ -8,9 +8,12 @@ import AdminBills from "./pages/AdminBills";
 import ItemsPage from "./pages/ItemsPage";
 import AddProduct from "./pages/AddProduct";
 import Parties from "./pages/Parties";
+import EditParty from "./pages/EditParty";
 import AddCustomer from "./pages/AddCustomer";
 import AddSupplier from "./pages/AddSupplier";
 import { Button } from "@/components/ui/button";
+import AddParty from "./pages/AddParty";
+import PartyDetails from "./pages/PartyDetails";
 
 export default function App() {
   return (
@@ -23,11 +26,12 @@ export default function App() {
       < Route path="/customer" element={< CustomerDashboard />} />
       <Route path="/items" element={<ItemsPage />} />
       <Route path="/add-product" element={<AddProduct />} />
-
-
+      <Route path="/add-party" element={<AddParty />} />
+      <Route path="/edit-party/:id" element={<EditParty />} />
       <Route path="/parties" element={<Parties />} />
       <Route path="/add-customer" element={<AddCustomer />} />
       <Route path="/add-supplier" element={<AddSupplier />} />
+      <Route path="/party/:id" element={<PartyDetails />} />
 
       <Route path="/bills" element={<AdminBills />} />
 // Optional placeholders for details/new:

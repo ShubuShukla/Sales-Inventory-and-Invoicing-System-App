@@ -1,9 +1,29 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiRequest } from "@/apiClient";
 
 export default function AddCustomer() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: "", phone: "", type: "customer" });
+  const [form, setForm] = useState({
+    name: "",
+    phone: "",
+    type: "CUSTOMER",
+    gst: "",
+    address: ""
+  });
+
+  async function handleSubmit() {
+    try {
+      await apiRequest("/api/parties", {
+        method: "POST",
+        body: JSON.stringify(form)
+      });
+
+      navigate("/parties");
+    } catch (err) {
+      alert(err.message);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -22,6 +42,7 @@ export default function AddCustomer() {
           onChange={(e) => setForm({ ...form, name: e.target.value })}
           className="w-full border rounded-lg px-3 py-2 text-sm"
         />
+
         <div className="flex gap-2">
           <div className="border rounded-lg px-3 py-2 flex items-center gap-1 text-sm bg-gray-50">
             🇮🇳 +91
@@ -35,37 +56,24 @@ export default function AddCustomer() {
           />
         </div>
 
-        {/* Type Selection */}
-        <p className="text-sm text-gray-600">Who are they?</p>
-        <div className="flex gap-4">
-          <label className="flex items-center gap-1 text-sm">
-            <input
-              type="radio"
-              name="type"
-              checked={form.type === "customer"}
-              onChange={() => setForm({ ...form, type: "customer" })}
-            />
-            Customer
-          </label>
-          <label className="flex items-center gap-1 text-sm">
-            <input
-              type="radio"
-              name="type"
-              checked={form.type === "supplier"}
-              onChange={() => setForm({ ...form, type: "supplier" })}
-            />
-            Supplier
-          </label>
-        </div>
+        {/* Optional */}
+        <input
+          type="text"
+          placeholder="GSTIN (optional)"
+          value={form.gst}
+          onChange={(e) => setForm({ ...form, gst: e.target.value })}
+          className="w-full border rounded-lg px-3 py-2 text-sm"
+        />
 
-        {/* Optional Fields */}
-        <p className="text-blue-600 text-sm font-medium mt-2">
-          + ADD GSTIN & ADDRESS (OPTIONAL)
-        </p>
+        <textarea
+          placeholder="Address (optional)"
+          value={form.address}
+          onChange={(e) => setForm({ ...form, address: e.target.value })}
+          className="w-full border rounded-lg px-3 py-2 text-sm"
+        />
 
-        {/* Submit */}
         <button
-          onClick={() => navigate("/parties")}
+          onClick={handleSubmit}
           className="w-full bg-blue-700 text-white font-medium py-3 rounded-lg mt-4"
         >
           ADD CUSTOMER

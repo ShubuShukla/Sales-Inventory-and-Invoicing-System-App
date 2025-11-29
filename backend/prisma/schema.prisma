@@ -9,71 +9,90 @@ datasource db {
 }
 
 model User {
-  id          String   @id @default(uuid())
-  phone       String   @unique
-  name        String?
-  role        UserRole
-  password    String?
-  isVerified  Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(uuid())
+  phone      String   @unique
+  name       String?
+  role       UserRole
+  password   String?
+  isVerified Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   // relations
-  parties     Party[]  @relation("PartyOwner")
-  invoices    Invoice[] @relation("InvoiceOwner")
-  items       Item[]    // add missing reverse relation
+  parties  Party[]   @relation("PartyOwner")
+  invoices Invoice[] @relation("InvoiceOwner")
+  items    Item[] // add missing reverse relation
 }
 
 model Party {
-  id          String   @id @default(uuid())
-  name        String
-  phone       String
-  type        PartyType
-  gst         String?
-  address     String?
-  balance     Float    @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String    @id @default(uuid())
+  name      String
+  phone     String
+  type      PartyType
+  gst       String?
+  address   String?
+  balance   Float     @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-  ownerId     String
-  owner       User     @relation("PartyOwner", fields: [ownerId], references: [id])
-  invoices    Invoice[] // reverse relation added here
+  ownerId  String
+  owner    User      @relation("PartyOwner", fields: [ownerId], references: [id])
+  invoices Invoice[] // reverse relation added here
 }
 
 model Item {
-  id          String   @id @default(uuid())
-  sku         String?  @unique
+  id          String  @id @default(uuid())
+  sku         String? @unique
   name        String
   description String?
   unitPrice   Float
   costPrice   Float?
-  stock       Int      @default(0)
+  stock       Int     @default(0)
 
-  cgst        Float    @default(0)
-  sgst        Float    @default(0)
-  hsnCode     String?
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  cgst    Float   @default(0)
+  sgst    Float   @default(0)
+  hsnCode String?
 
-  ownerId     String
-  owner       User     @relation(fields: [ownerId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id])
+
+  // ADD THIS LINE ↓↓↓
+  invoiceItems InvoiceItem[]
 }
 
 model Invoice {
-  id          String   @id @default(uuid())
-  invoiceNo   String   @unique
-  total       Float
-  status      InvoiceStatus @default(PENDING)
-  items       Json
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String        @id @default(uuid())
+  invoiceNo String        @unique
+  total     Float
+  status    InvoiceStatus @default(PENDING)
 
-  ownerId     String
-  partyId     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  owner       User   @relation("InvoiceOwner", fields: [ownerId], references: [id])
-  party       Party  @relation(fields: [partyId], references: [id])
+  ownerId String
+  partyId String
+
+  owner User  @relation("InvoiceOwner", fields: [ownerId], references: [id])
+  party Party @relation(fields: [partyId], references: [id])
+
+  items InvoiceItem[] // connect here
+}
+
+model InvoiceItem {
+  id        String @id @default(uuid())
+  invoiceId String
+  itemId    String
+  quantity  Float
+  rate      Float
+  cgst      Float
+  sgst      Float
+  total     Float // total for this line (quantity * rate + gst)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+  item    Item    @relation(fields: [itemId], references: [id])
 }
 
 enum UserRole {
