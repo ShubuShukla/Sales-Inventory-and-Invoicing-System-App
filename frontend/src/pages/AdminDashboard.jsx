@@ -81,7 +81,14 @@ export default function AdminDashboard() {
           </button>
         </div>
       </footer>
+
+      <button onClick={() => navigate("/invoice")}>
+        Create Invoice
+      </button>
     </div>
+
+
+
   );
 }
 

@@ -7,6 +7,8 @@ const {
   createInvoice,
   getInvoices,
   getInvoiceById,
+  deleteInvoice,
+  updateInvoice 
 } = require("../controllers/invoicesController");
 
 router.use(authMiddleware);
@@ -19,6 +21,13 @@ router.get("/", getInvoices);
 
 // GET single invoice
 router.get("/:id", getInvoiceById);
+
+// Add delete
+router.delete("/:id", requireRole("ADMIN"), deleteInvoice);
+
+// add this route (ADMIN only)
+router.put("/:id", requireRole("ADMIN"), updateInvoice);
+
 
 module.exports = router;
 

@@ -14,7 +14,9 @@ import AddSupplier from "./pages/AddSupplier";
 import { Button } from "@/components/ui/button";
 import AddParty from "./pages/AddParty";
 import PartyDetails from "./pages/PartyDetails";
-
+import Invoice from "./pages/Invoice";
+import InvoicesList from "./pages/InvoicesList";
+import InvoiceDetail from "./pages/InvoiceDetail";
 export default function App() {
   return (
 
@@ -32,6 +34,14 @@ export default function App() {
       <Route path="/add-customer" element={<AddCustomer />} />
       <Route path="/add-supplier" element={<AddSupplier />} />
       <Route path="/party/:id" element={<PartyDetails />} />
+
+      // route for edit - reuse create page or implement separate
+      <Route path="/invoice-edit/:id" element={<Invoice />} />  // if Invoice.jsx supports edit
+      // create route
+      <Route path="/create-invoice" element={<Invoice />} />
+
+      <Route path="/invoices" element={<InvoicesList />} />
+      <Route path="/invoice/:id" element={<InvoiceDetail />} />
 
       <Route path="/bills" element={<AdminBills />} />
 // Optional placeholders for details/new:
