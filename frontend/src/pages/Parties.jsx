@@ -16,6 +16,22 @@ export default function Parties() {
     fetchParties();
   }, [tab]);
 
+  function round2(n) {
+    return Math.round((Number(n) + Number.EPSILON) * 100) / 100;
+  }
+
+   const youWillGet = round2(
+    parties
+      .filter((p) => p.balance > 0)
+      .reduce((sum, p) => sum + p.balance, 0)
+  );
+
+  const youWillGive = round2(
+    parties
+      .filter((p) => p.balance < 0)
+      .reduce((sum, p) => sum + Math.abs(p.balance), 0)
+  );
+
   async function handleDelete(id) {
     const ok = window.confirm("Are you sure you want to delete this party?");
     if (!ok) return;
@@ -84,20 +100,14 @@ export default function Parties() {
         <div className="text-center">
           <p className="text-xs text-gray-500">You will give</p>
           <p className="text-green-600 font-semibold text-sm">
-            ₹
-            {tab === "SUPPLIER"
-              ? parties.reduce((sum, p) => sum + (p.balance || 0), 0)
-              : 0}
+            ₹{youWillGive}
           </p>
         </div>
 
         <div className="text-center border-l border-gray-200 px-4">
           <p className="text-xs text-gray-500">You will get</p>
           <p className="text-red-600 font-semibold text-sm">
-            ₹
-            {tab === "CUSTOMER"
-              ? parties.reduce((sum, p) => sum + (p.balance || 0), 0)
-              : 0}
+            ₹{youWillGet}
           </p>
         </div>
 
@@ -105,6 +115,7 @@ export default function Parties() {
           Report
         </button>
       </div>
+
 
       {/* List */}
       <div className="mt-4 px-4">
@@ -189,4 +200,7 @@ export default function Parties() {
       </div>
     </div>
   );
+
+ 
+
 }

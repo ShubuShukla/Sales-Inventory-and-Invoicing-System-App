@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/apiClient";
+import { useParams } from "react-router-dom";
 
 /**
  * Single-step Invoice page
@@ -22,33 +23,73 @@ export default function Invoice() {
   const [error, setError] = useState("");
 
   const [partyId, setPartyId] = useState("");
-  const [lines, setLines] = useState([
-    { id: cryptoRandomId(), itemId: "", quantity: 1, rate: 0, cgst: 0, sgst: 0, total: 0 },
-  ]);
+  // const [lines, setLines] = useState([
+  //   { id: cryptoRandomId(), itemId: "", quantity: 1, rate: 0, cgst: 0, sgst: 0, total: 0 },
+  // ]);
+  const [lines, setLines] = useState([]);
+
+
+  const { id: invoiceId } = useParams();
+  const isEditMode = Boolean(invoiceId);
+const [invoiceNo, setInvoiceNo] = useState("");
+
 
   // load parties and items
   useEffect(() => {
     let cancelled = false;
+
     async function load() {
       setLoading(true);
       setError("");
+
       try {
-        const p = await apiRequest("/api/parties?type=CUSTOMER");
-        const it = await apiRequest("/api/items?limit=100"); // adjust if you paginate more
+        const [p, it] = await Promise.all([
+          apiRequest("/api/parties?type=CUSTOMER"),
+          apiRequest("/api/items?limit=100"),
+        ]);
+
         if (cancelled) return;
+
         setParties(p.parties || []);
         setItems(it.items || []);
-        // default select first party if exists
-        if ((p.parties || []).length > 0 && !partyId) setPartyId((p.parties || [])[0].id);
+
+        // CREATE MODE: select first party
+        if (!isEditMode && (p.parties || []).length > 0) {
+          setPartyId(p.parties[0].id);
+        }
+
+        // EDIT MODE: load invoice
+        if (isEditMode) {
+          const invRes = await apiRequest(`/api/invoices/${invoiceId}`);
+          const inv = invRes.invoice;
+
+          setInvoiceNo(inv.invoiceNo);
+          setPartyId(inv.partyId);
+
+          // Prefill lines
+          setLines(
+            inv.items.map((li) => ({
+              id: cryptoRandomId(),
+              itemId: li.itemId,
+              quantity: li.quantity,
+              rate: li.rate,
+              cgst: li.cgst,
+              sgst: li.sgst,
+              total: li.total,
+            }))
+          );
+        }
       } catch (err) {
-        setError(err.message || "Failed to load data");
+        setError(err.message || "Failed to load invoice");
       } finally {
         setLoading(false);
       }
     }
+
     load();
     return () => (cancelled = true);
-  }, []);
+  }, [invoiceId]);
+
 
   // compute invoice totals
   const { subtotal, totalGst, grandTotal } = useMemo(() => {
@@ -83,13 +124,13 @@ export default function Invoice() {
       prev.map((L) =>
         L.id === lineId
           ? {
-              ...L,
-              itemId,
-              rate: item ? item.unitPrice : 0,
-              cgst: item ? item.cgst : 0,
-              sgst: item ? item.sgst : 0,
-              total: computeLineTotal(item ? item.unitPrice : 0, L.quantity || 1, item ? item.cgst : 0, item ? item.sgst : 0),
-            }
+            ...L,
+            itemId,
+            rate: item ? item.unitPrice : 0,
+            cgst: item ? item.cgst : 0,
+            sgst: item ? item.sgst : 0,
+            total: computeLineTotal(item ? item.unitPrice : 0, L.quantity || 1, item ? item.cgst : 0, item ? item.sgst : 0),
+          }
           : L
       )
     );
@@ -100,10 +141,10 @@ export default function Invoice() {
       prev.map((L) =>
         L.id === lineId
           ? {
-              ...L,
-              ...changes,
-              total: computeLineTotal(changes.rate ?? L.rate, changes.quantity ?? L.quantity, changes.cgst ?? L.cgst, changes.sgst ?? L.sgst),
-            }
+            ...L,
+            ...changes,
+            total: computeLineTotal(changes.rate ?? L.rate, changes.quantity ?? L.quantity, changes.cgst ?? L.cgst, changes.sgst ?? L.sgst),
+          }
           : L
       )
     );
@@ -128,8 +169,8 @@ export default function Invoice() {
 
   // Submit invoice - **DO NOT send invoiceNo**, backend will generate
   async function handleSubmit() {
-    if (!partyId) return alert("Select a party");
-    if (lines.length === 0) return alert("Add at least one line");
+    if (!partyId) return alert("Select a customer");
+    if (lines.length === 0) return alert("Add at least one item");
 
     const payload = {
       partyId,
@@ -137,38 +178,44 @@ export default function Invoice() {
         .filter((L) => L.itemId)
         .map((L) => ({
           itemId: L.itemId,
-          quantity: Number(L.quantity || 0),
-          rate: Number(L.rate || 0),
-          cgst: Number(L.cgst || 0),
-          sgst: Number(L.sgst || 0),
-          total: Number(L.total || 0),
+          quantity: Number(L.quantity),
+          rate: Number(L.rate),
+          cgst: Number(L.cgst),
+          sgst: Number(L.sgst),
         })),
-      total: grandTotal,
     };
 
-    if (payload.items.length === 0) return alert("Please select item(s) for lines");
+    if (payload.items.length === 0) {
+      return alert("Please select items");
+    }
 
     setLoading(true);
-    try {
-      const res = await apiRequest("/api/invoices", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
 
-      if (res.ok && res.invoice) {
-        // backend generated invoiceNo. show it and navigate
-        const invNo = res.invoice.invoiceNo || "(no invoiceNo returned)";
-        alert(`Invoice created — ${invNo}`);
-        navigate("/invoices");
+    try {
+      if (isEditMode) {
+        // UPDATE
+        await apiRequest(`/api/invoices/${invoiceId}`, {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        });
+        alert("Invoice updated");
       } else {
-        alert(res.message || "Failed to create invoice");
+        // CREATE
+        await apiRequest("/api/invoices", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+        alert("Invoice created");
       }
+
+      navigate("/invoices");
     } catch (err) {
-      alert(err.message || "Server error");
+      alert(err.message || "Failed to save invoice");
     } finally {
       setLoading(false);
     }
   }
+
 
   // UI
   return (
@@ -177,7 +224,10 @@ export default function Invoice() {
         <div className="bg-white rounded-xl shadow p-4 mb-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold">Create Invoice</h2>
+              <h2 className="text-lg font-semibold">
+                {isEditMode ? "Edit Invoice" : "Create Invoice"}
+              </h2>
+
               <p className="text-sm text-gray-500">Single-step invoice creation</p>
             </div>
 
@@ -274,8 +324,13 @@ export default function Invoice() {
             <div className="text-2xl font-bold">₹{grandTotal}</div>
             <div className="mt-3">
               <Button onClick={handleSubmit} disabled={loading}>
-                {loading ? "Saving..." : "Create Invoice"}
+                {loading
+                  ? "Saving..."
+                  : isEditMode
+                    ? "Update Invoice"
+                    : "Create Invoice"}
               </Button>
+
             </div>
           </div>
         </div>

@@ -42,7 +42,7 @@ export default function InvoicesList() {
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Invoices</h2>
-          <Button onClick={() => navigate("/create-invoice")}>Create Invoice</Button>
+          <Button onClick={() => navigate("/invoice")}>Create Invoice</Button>
         </div>
 
         {loading ? (
@@ -64,7 +64,7 @@ export default function InvoicesList() {
 
                 <div className="flex items-center gap-2">
                   <button className="text-sm text-blue-600 underline" onClick={() => navigate(`/invoice/${inv.id}`)}>View</button>
-                  <button className="text-sm text-blue-600 underline" onClick={() => navigate(`/invoice-edit/${inv.id}`)}>Edit</button>
+                  <button className="text-sm text-blue-600 underline" onClick={() => navigate(`/invoice/${inv.id}`)}>Edit</button>
                   <button className="text-sm text-red-600 underline" onClick={() => handleDelete(inv.id)}>Delete</button>
                 </div>
               </div>

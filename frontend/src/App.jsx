@@ -35,13 +35,18 @@ export default function App() {
       <Route path="/add-supplier" element={<AddSupplier />} />
       <Route path="/party/:id" element={<PartyDetails />} />
 
-      // route for edit - reuse create page or implement separate
+       {/* route for edit - reuse create page or implement separate
       <Route path="/invoice-edit/:id" element={<Invoice />} />  // if Invoice.jsx supports edit
       // create route
       <Route path="/create-invoice" element={<Invoice />} />
+      <Route path="/invoice" element={<Invoice />} />
 
       <Route path="/invoices" element={<InvoicesList />} />
-      <Route path="/invoice/:id" element={<InvoiceDetail />} />
+      <Route path="/invoice/:id" element={<InvoiceDetail />} /> */}
+
+      <Route path="/invoices" element={<InvoicesList />} />
+<Route path="/invoice" element={<Invoice />} />        {/* Create */}
+<Route path="/invoice/:id" element={<Invoice />} />    {/* Edit */}
 
       <Route path="/bills" element={<AdminBills />} />
 // Optional placeholders for details/new:

@@ -116,6 +116,16 @@ exports.createInvoice = async (req, res) => {
       },
     });
 
+    // Increase customer balance
+    await prisma.party.update({
+      where: { id: partyId },
+      data: {
+        balance: {
+          increment: totalAmount,
+        },
+      },
+    });
+
     res.json({ ok: true, invoice: invoiceWithItems });
   } catch (err) {
     console.error("createInvoice error", err);
@@ -175,6 +185,8 @@ exports.deleteInvoice = async (req, res) => {
     const { id } = req.params;
     const ownerId = req.user.id;
 
+
+
     // ensure invoice belongs to owner
     const existing = await prisma.invoice.findUnique({
       where: { id },
@@ -184,6 +196,16 @@ exports.deleteInvoice = async (req, res) => {
     if (!existing || existing.ownerId !== ownerId) {
       return res.status(404).json({ ok: false, message: "Invoice not found" });
     }
+
+    // Reverse customer balance
+    await prisma.party.update({
+      where: { id: existing.partyId },
+      data: {
+        balance: {
+          decrement: existing.total,
+        },
+      },
+    });
 
     // 1) restore stock for each invoiceItem
     for (const line of existing.items) {
@@ -292,6 +314,8 @@ exports.updateInvoice = async (req, res) => {
     // Compute new invoice total
     const totalAmount = newLines.reduce((s, l) => s + Number(l.total || 0), 0);
 
+    const balanceDiff = totalAmount - existing.total;
+
     // Run transaction:
     const updated = await prisma.$transaction(async (tx) => {
       // 1) Update invoice main fields (party, total)
@@ -322,35 +346,60 @@ exports.updateInvoice = async (req, res) => {
       }
 
       // 4) Apply stock adjustments for each itemId (delta)
+      // 4) Stock adjustments
       for (const [itemId, delta] of Object.entries(stockDeltas)) {
         if (delta === 0) continue;
-        // delta > 0 => we sold more than before -> decrement stock by delta
-        // delta < 0 => we sold less than before -> increment stock by (-delta)
-        if (delta > 0) {
-          await tx.item.update({
-            where: { id: itemId },
-            data: {
-              stock: { decrement: delta },
-            },
-          });
-        } else {
-          await tx.item.update({
-            where: { id: itemId },
-            data: {
-              stock: { increment: Math.abs(delta) },
-            },
-          });
-        }
+        await tx.item.update({
+          where: { id: itemId },
+          data: {
+            stock: delta > 0
+              ? { decrement: delta }
+              : { increment: Math.abs(delta) },
+          },
+        });
       }
 
-      return true;
+
+      // 5️⃣ Adjust party balance correctly
+      if (existing.partyId !== partyId) {
+        // Invoice moved to a different party
+
+        // Remove full amount from old party
+        await tx.party.update({
+          where: { id: existing.partyId },
+          data: {
+            balance: { decrement: existing.total },
+          },
+        });
+
+        // Add full amount to new party
+        await tx.party.update({
+          where: { id: partyId },
+          data: {
+            balance: { increment: totalAmount },
+          },
+        });
+      } else if (balanceDiff !== 0) {
+        // Same party, only amount changed
+        await tx.party.update({
+          where: { id: partyId },
+          data: {
+            balance: { increment: balanceDiff },
+          },
+        });
+      }
+
     });
+
+
 
     // Fetch updated invoice
     const invoiceWithItems = await prisma.invoice.findUnique({
       where: { id },
       include: { items: { include: { item: true } }, party: true },
     });
+
+
 
     return res.json({ ok: true, invoice: invoiceWithItems });
   } catch (err) {

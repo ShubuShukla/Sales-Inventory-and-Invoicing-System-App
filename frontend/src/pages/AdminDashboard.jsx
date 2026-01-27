@@ -5,7 +5,7 @@ export default function AdminDashboard() {
 
   const items = [
     { icon: "💰", title: "Cashbook" },
-    { icon: "📄", title: "Bills", path: "/bills" },
+    { icon: "📄", title: "Invoices", path: "/invoices" },
     { icon: "📦", title: "Items", path: "/items" },
     { icon: "👥", title: "Staff" },
     { icon: "📅", title: "Collection" },
@@ -82,9 +82,7 @@ export default function AdminDashboard() {
         </div>
       </footer>
 
-      <button onClick={() => navigate("/invoice")}>
-        Create Invoice
-      </button>
+     
     </div>
 
 
